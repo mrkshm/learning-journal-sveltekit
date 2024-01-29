@@ -1,80 +1,24 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { writable } from 'svelte/store';
+	import { customEnhance as importedCustomEnhance } from '$lib/custom-enhance';
+	import EntryListItem from '../components/entry-list-item.svelte';
+
 	import { format, parseISO } from 'date-fns';
-	let isSubmitting = false;
-	let textareaRef: HTMLTextAreaElement;
+	let isSubmitting = writable(false);
 	import type { Week } from './+page.server';
+	import EntryForm from '../components/entry-form.svelte';
 	export let data: { weeks: Week[] };
 
-	const customEnhance = () => {
-		// Here is what's happening
-		// This function is called just before the form is submitted
-		isSubmitting = true;
+	let entryFormComponent: EntryForm;
 
-		return async () =>
-			// { result, update }
-			{
-				// This callback is called after the form submission is complete
-				isSubmitting = false;
-				if (textareaRef) {
-					textareaRef.value = '';
-				}
-			};
-	};
+	function customEnhanceWrapper() {
+		return importedCustomEnhance({ isSubmitting, entryFormComponent });
+	}
 </script>
 
-<div class="mx-auto max-w-7xl p-6">
-	<h1 class="text-4xl text-white">Work journal</h1>
-	<p class="mt-3 text-xl text-gray-400">Doings and learnings. Updated weekly.</p>
-
-	<p>No entries. Write your first journal entry.</p>
+<div>
 	<div class="my-8 border p-2">
-		<form method="POST" use:enhance={customEnhance}>
-			<p class="italic">Create an entry</p>
-			<fieldset disabled={isSubmitting} class="disabled:opacity-70">
-				<div class="mt-4">
-					<input
-						type="date"
-						required
-						name="date"
-						value={format(new Date(), 'yyyy-MM-dd')}
-						class="text-gray-700"
-					/>
-				</div>
-				<div class="space-x-6 mt-4">
-					<label>
-						<input required class="mr-1" type="radio" checked={true} name="category" value="work" />
-						Work
-					</label>
-					<label>
-						<input class="mr-1" type="radio" name="category" value="learning" />
-						Learning
-					</label>
-					<label>
-						<input class="mr-1" type="radio" name="category" value="interesting-thing" />
-						Interesting Thing
-					</label>
-				</div>
-				<div class="mt-4">
-					<textarea
-						bind:this={textareaRef}
-						required
-						name="description"
-						class="width-full text-gray-700"
-						placeholder="Write your entry"
-					></textarea>
-				</div>
-				<div class="mt-1 text-right">
-					<button
-						type="submit"
-						disabled={isSubmitting}
-						class="px-4 py-1 bg-blue-500 text-white font-medium"
-					>
-						{isSubmitting ? 'Saving...' : 'Save'}
-					</button>
-				</div>
-			</fieldset>
-		</form>
+		<EntryForm formType="create" {isSubmitting} customEnhance={customEnhanceWrapper} />
 	</div>
 	<div class="space-y-4">
 		{#each data.weeks as week}
@@ -86,7 +30,7 @@
 							<p>Work</p>
 							<ul class="ml-8 list-disc">
 								{#each week.work as workEntry (workEntry.id)}
-									<li>{workEntry.description}</li>
+									<EntryListItem entry={workEntry} />
 								{/each}
 							</ul>
 						</div>
@@ -96,7 +40,7 @@
 							<p>Learnings</p>
 							<ul class="ml-8 list-disc">
 								{#each week.learnings as learningEntry (learningEntry.id)}
-									<li>{learningEntry.description}</li>
+									<EntryListItem entry={learningEntry} />
 								{/each}
 							</ul>
 						</div>
@@ -106,7 +50,7 @@
 							<p>Learnings</p>
 							<ul class="ml-8 list-disc">
 								{#each week.interestingThings as interestingThingEntry (interestingThingEntry.id)}
-									<li>{interestingThingEntry.description}</li>
+									<EntryListItem entry={interestingThingEntry} />
 								{/each}
 							</ul>
 						</div>
