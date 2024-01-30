@@ -3,6 +3,8 @@
 	import { customEnhance as importedCustomEnhance } from '$lib/custom-enhance';
 	import EntryListItem from '../components/entry-list-item.svelte';
 
+	import { page } from '$app/stores';
+
 	import { format, parseISO } from 'date-fns';
 	let isSubmitting = writable(false);
 	import type { Week } from './+page.server';
@@ -17,9 +19,11 @@
 </script>
 
 <div>
-	<div class="my-8 border p-2">
-		<EntryForm formType="create" {isSubmitting} customEnhance={customEnhanceWrapper} />
-	</div>
+	{#if $page.data.user.isAdmin}
+		<div class="my-8 border p-2">
+			<EntryForm {isSubmitting} customEnhance={customEnhanceWrapper} />
+		</div>
+	{/if}
 	<div class="space-y-4">
 		{#each data.weeks as week}
 			<div class="mt-8">
